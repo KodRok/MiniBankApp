@@ -7,6 +7,7 @@ import org.sorokin_school.model.Account;
 import org.sorokin_school.model.User;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,21 +34,27 @@ public class AccountService {
         return account;
     }
 
-    public void deposit(int accountId, int amount) {
-        if (amount <= 0) throw new BankException("Сумма должна быть положительной");
+    public void deposit(int accountId, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0){
+            throw new BankException("Сумма должна быть положительной");
+        }
         Account account = findAccountById(accountId);
-        account.setMoneyAmount(account.getMoneyAmount() + amount);
+        account.setMoneyAmount(account.getMoneyAmount().add(amount));
     }
 
-    public void withdraw(int accountId, int amount) {
-        if (amount <= 0) throw new BankException("Сумма должна быть положительной");
+    public void withdraw(int accountId, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BankException("Сумма должна быть положительной");
+        }
         Account account = findAccountById(accountId);
-        if (account.getMoneyAmount() < amount) throw new BankException("Недостаточно средств");
-        account.setMoneyAmount(account.getMoneyAmount() - amount);
+        if (account.getMoneyAmount().compareTo(amount) < 0) {
+            throw new BankException("Недостаточно средств");
+        }
+        account.setMoneyAmount(account.getMoneyAmount().subtract(amount));
     }
 
-    public void transfer(int fromId, int toId, int amount) {
-        if (amount <= 0) {
+    public void transfer(int fromId, int toId, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BankException("Сумма перевода должна быть положительной!");
         }
         if (fromId == toId) {
@@ -57,25 +64,27 @@ public class AccountService {
         Account from = findAccountById(fromId);
         Account to = findAccountById(toId);
 
-        if (from.getMoneyAmount() < amount) {
+        if (from.getMoneyAmount().compareTo(amount) < 0) {
             throw new BankException("Недостаточно средств! Требуется: " + amount +
                     ", в наличии: " + from.getMoneyAmount());
         }
 
-        int amountToReceive = amount;
+        BigDecimal amountToReceive = amount;
 
         if (from.getUserId() != to.getUserId()) {
-            double commission = amount * accountProperties.getTransferCommission();
-            amountToReceive = (int) (amount - commission);
+            BigDecimal commissionRate = BigDecimal.valueOf(accountProperties.getTransferCommission());
+            BigDecimal commission = amount.multiply(commissionRate);
+
+            amountToReceive = amount.subtract(commission);
 
             System.out.println(ConsoleColors.BLUE + "Межбанковский перевод. Комиссия: "
-                    + (amount - amountToReceive) + ConsoleColors.RESET);
+                    + commission.toPlainString() + ConsoleColors.RESET);
         } else {
             System.out.println("Перевод между своими счетами. Без комиссии.");
         }
 
-        from.setMoneyAmount(from.getMoneyAmount() - amount);
-        to.setMoneyAmount(to.getMoneyAmount() + amountToReceive);
+        from.setMoneyAmount(from.getMoneyAmount().subtract(amount));
+        to.setMoneyAmount(to.getMoneyAmount().add(amountToReceive));
     }
 
     public void closeAccount(int accountId) {
@@ -94,13 +103,13 @@ public class AccountService {
                 .findFirst()
                 .orElseThrow();
 
-        int balanceToTransfer = accountToClose.getMoneyAmount();
-        beneficiaryAccount.setMoneyAmount(beneficiaryAccount.getMoneyAmount() + balanceToTransfer);
+        BigDecimal balanceToTransfer = accountToClose.getMoneyAmount();
+        beneficiaryAccount.setMoneyAmount(beneficiaryAccount.getMoneyAmount().add(balanceToTransfer));
 
         userAccounts.remove(accountToClose);
         accounts.remove(accountId);
 
-        System.out.printf("Счет #%d закрыт. Остаток %d у.е. переведен на счет #%d.%n",
+        System.out.printf("Счет #%d закрыт. Остаток %s у.е. переведен на счет #%d.%n",
                 accountId, balanceToTransfer, beneficiaryAccount.getId());
     }
 

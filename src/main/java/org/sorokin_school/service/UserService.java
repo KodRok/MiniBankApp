@@ -3,6 +3,7 @@ package org.sorokin_school.service;
 import org.sorokin_school.exception.BankException;
 import org.sorokin_school.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -15,7 +16,7 @@ public class UserService {
     private AccountService accountService;
 
     @Autowired
-    public void setAccountService(AccountService accountService) {
+    public void setAccountService(@Lazy AccountService accountService) {
         this.accountService = accountService;
     }
 

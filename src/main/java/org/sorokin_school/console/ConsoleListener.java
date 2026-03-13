@@ -7,6 +7,7 @@ import org.sorokin_school.service.AccountService;
 import org.sorokin_school.service.UserService;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Scanner;
 
 @Component
@@ -134,7 +135,7 @@ public class ConsoleListener {
         int toId = Integer.parseInt(scanner.nextLine());
 
         System.out.println("Введите сумму перевода:");
-        int amount = Integer.parseInt(scanner.nextLine());
+        BigDecimal amount = new BigDecimal(scanner.nextLine());
 
         accountService.transfer(fromId, toId, amount);
         System.out.println("Перевод успешно выполнен.");
@@ -145,7 +146,8 @@ public class ConsoleListener {
         int withdrawAccId = Integer.parseInt(scanner.nextLine());
 
         System.out.println("Введите сумму для снятия:");
-        int withdrawAmount = Integer.parseInt(scanner.nextLine());
+        BigDecimal withdrawAmount = new BigDecimal(scanner.nextLine());
+        accountService.withdraw(withdrawAccId, withdrawAmount);
 
         accountService.withdraw(withdrawAccId, withdrawAmount);
         System.out.println("Снятие выполнено успешно.");
@@ -156,7 +158,7 @@ public class ConsoleListener {
         int depositAccId = Integer.parseInt(scanner.nextLine());
 
         System.out.println("Введите сумму для пополнения:");
-        int depositAmount = Integer.parseInt(scanner.nextLine());
+        BigDecimal depositAmount = new BigDecimal(scanner.nextLine());
 
         accountService.deposit(depositAccId, depositAmount);
         System.out.println(ConsoleColors.GREEN + "Счет успешно пополнен на " + depositAmount + ConsoleColors.RESET);
@@ -194,11 +196,10 @@ public class ConsoleListener {
 
             if (!user.getAccountList().isEmpty()) {
                 for (Account acc : user.getAccountList()) {
-                    System.out.printf("   └─ Счет #%d: %d у.е.%n",
-                            acc.getId(), acc.getMoneyAmount());
+                    System.out.printf("   └─ Счет #%d: %s у.е.%n", acc.getId(), acc.getMoneyAmount());
                 }
             }
-            System.out.println("---------------------------------");
+            System.out.println("-".repeat(25));
         }
     }
 }
